@@ -1,0 +1,12 @@
+{
+  "search_keywords": ["ao", "giay", "phu kien"],
+  "non_existing_keyword": "khongtontaisanpham123",
+  "price_filter": {
+    "min": "100000",
+    "max": "500000"
+  },
+  "sort_values": {
+    "price_asc": "price",
+    "price_desc": "price-desc"
+  }
+}
