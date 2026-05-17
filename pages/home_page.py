@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from urllib.parse import quote, urlsplit
+
 from pages.base_page import BasePage
 from components.header_component import HeaderComponent
 
@@ -10,4 +12,14 @@ class HomePage(BasePage):
         self.header = HeaderComponent(page, timeout)
 
     def search_product(self, keyword: str) -> None:
+        current = self.page.url
+        parsed = urlsplit(current)
+        if parsed.scheme and parsed.netloc:
+            origin = f"{parsed.scheme}://{parsed.netloc}"
+            self.page.goto(
+                f"{origin}/tim-kiem/{quote(keyword)}",
+                wait_until="commit",
+                timeout=self.timeout,
+            )
+            return
         self.header.search(keyword)

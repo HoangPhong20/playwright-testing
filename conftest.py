@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 import pytest
 from playwright.sync_api import Playwright, sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from config.settings import BASE_URL, BROWSER, HEADLESS, TIMEOUT
 from fixtures.data_loader import load_test_data
@@ -64,4 +65,7 @@ def screenshot_on_failure(request, page):
         reports.mkdir(exist_ok=True)
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_name = f"{request.node.name}_{ts}.png"
-        page.screenshot(path=str(reports / file_name), full_page=True)
+        try:
+            page.screenshot(path=str(reports / file_name), full_page=True)
+        except PlaywrightTimeoutError:
+            pass

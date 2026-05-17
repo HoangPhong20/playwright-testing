@@ -10,7 +10,7 @@ class BasePage:
         self.timeout = timeout
 
     def open(self, url: str) -> None:
-        self.page.goto(url, wait_until="domcontentloaded", timeout=self.timeout)
+        self.page.goto(url, wait_until="commit", timeout=self.timeout)
 
     def accept_cookie_if_present(self) -> None:
         for locator in CommonLocators.COOKIE_ACCEPT_BUTTONS:

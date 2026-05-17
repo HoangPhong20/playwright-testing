@@ -18,6 +18,12 @@ class HeaderComponent:
             submit.click()
         else:
             search_input.press("Enter")
+        self.page.wait_for_timeout(1000)
 
     def open_cart(self) -> None:
-        self.page.locator(HeaderLocators.CART_ICON).first.click()
+        cart = self.page.locator(HeaderLocators.CART_ICON).first
+        href = cart.get_attribute("href") if cart.count() > 0 else None
+        if href:
+            self.page.goto(href, wait_until="commit", timeout=self.timeout)
+            return
+        cart.click()

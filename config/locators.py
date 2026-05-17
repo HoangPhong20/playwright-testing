@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 
 class CommonLocators:
@@ -10,16 +10,27 @@ class CommonLocators:
 
 
 class HeaderLocators:
-    SEARCH_INPUT = "input[type='search'], input[name='s'], input[placeholder*='Tìm']"
-    SEARCH_SUBMIT = "button[type='submit'], button:has-text('Tìm')"
+    SEARCH_INPUT = "#tbSearchOnHeader, input[type='search'], input[name='s'], input[placeholder*='Tìm'], input[placeholder*='tim']"
+    SEARCH_SUBMIT = "button[type='submit'], input[type='submit'], button:has-text('Tìm')"
     CART_ICON = "a[href*='gio-hang'], a[href*='cart']"
     CART_COUNT = ".cart-contents-count, .count"
 
 
 class ProductListLocators:
-    PRODUCT_CARDS = ".product, .product-item, li.product"
-    PRODUCT_NAME = "h2, h3, .product-title, .woocommerce-loop-product__title"
-    PRODUCT_PRICE = ".price, .woocommerce-Price-amount, [class*='price']"
+    # Home template
+    HOME_PRODUCT_CARDS = ".productHome .itemBox"
+    HOME_PRODUCT_NAME = ".itemTitle"
+    HOME_PRODUCT_PRICE = ".listPrice .subItem span, .listPrice span"
+
+    # Search/listing template
+    SEARCH_PRODUCT_CARDS = ".list_sp .item"
+    SEARCH_PRODUCT_NAME = ".itemTitle"
+    SEARCH_PRODUCT_PRICE = ".listPrice .subItem span, .listPrice span"
+
+    # Fallback template
+    PRODUCT_CARDS = ".list_sp .item, .productHome .itemBox"
+    PRODUCT_NAME = ".itemTitle, h2, h3, .product-title"
+    PRODUCT_PRICE = ".listPrice .subItem span, .listPrice span, .price"
     SORT_DROPDOWN = "select.orderby, select[name*='orderby']"
     FILTER_PANEL = ".widget, .filter, [class*='filter']"
     CATEGORY_FILTER = "a[href*='product-category'], input[name*='category']"
@@ -31,13 +42,13 @@ class ProductListLocators:
 
 
 class ProductDetailLocators:
-    GALLERY_IMAGE = ".woocommerce-product-gallery img, .product-image img"
-    DESCRIPTION = ".woocommerce-product-details__short-description, .description, .product-description"
-    PRODUCT_PRICE = ".summary .price, .product .price"
-    ADD_TO_CART = "button[name='add-to-cart'], button:has-text('Thêm vào giỏ')"
+    GALLERY_IMAGE = ".detailProduct img, .itemDetail img, .slideProduct img, .imgDetail img"
+    DESCRIPTION = ".contentDetail, .description, .itemTitle"
+    PRODUCT_PRICE = ".listPrice .subItem span, .listPrice span"
+    ADD_TO_CART = "button:has-text('MUA NGAY'), button:has-text('Thêm vào giỏ'), button[name='add-to-cart']"
 
 
 class CartLocators:
-    CART_ITEMS = ".cart_item, .woocommerce-cart-form__cart-item"
-    REMOVE_ITEM = "a.remove, button:has-text('Xóa')"
-    EMPTY_MESSAGE = ".cart-empty, p:has-text('Giỏ hàng trống')"
+    CART_ITEMS = ".cart_item, .woocommerce-cart-form__cart-item, .itemCart, .listCart .item"
+    REMOVE_ITEM = "a.remove, button:has-text('Xóa'), a:has-text('Xóa')"
+    EMPTY_MESSAGE = ".cart-empty, p:has-text('Giỏ hàng trống'), text=/trong|empty/i"

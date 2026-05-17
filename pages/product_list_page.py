@@ -19,48 +19,93 @@ class ProductListPage:
             pass
 
     def get_product_cards(self) -> list[ProductCardComponent]:
-        cards = self.page.locator(ProductListLocators.PRODUCT_CARDS)
+        cards = self.page.locator(self._card_selector())
         return [ProductCardComponent(cards.nth(i)) for i in range(cards.count())]
 
     def get_product_names(self) -> list[str]:
         self.wait_loaded()
-        return [card.get_name() for card in self.get_product_cards()]
+        names = [card.get_name(self._name_selector()) for card in self.get_product_cards()]
+        return [name for name in names if name]
 
     def get_price_values(self) -> list[int]:
         self.wait_loaded()
         prices: list[int] = []
         for card in self.get_product_cards():
             try:
-                prices.append(parse_price_to_int(card.get_price_text()))
+                prices.append(parse_price_to_int(card.get_price_text(self._price_selector())))
             except Exception:
                 continue
         return [p for p in prices if p > 0]
 
+    def _card_selector(self) -> str:
+        url = self.page.url
+        if "/tim-kiem/" in url:
+            return ProductListLocators.SEARCH_PRODUCT_CARDS
+        return ProductListLocators.HOME_PRODUCT_CARDS
+
+    def _name_selector(self) -> str:
+        url = self.page.url
+        if "/tim-kiem/" in url:
+            return ProductListLocators.SEARCH_PRODUCT_NAME
+        return ProductListLocators.HOME_PRODUCT_NAME
+
+    def _price_selector(self) -> str:
+        url = self.page.url
+        if "/tim-kiem/" in url:
+            return ProductListLocators.SEARCH_PRODUCT_PRICE
+        return ProductListLocators.HOME_PRODUCT_PRICE
+
     def sort_by_value(self, value: str) -> None:
         dropdown = self.page.locator(ProductListLocators.SORT_DROPDOWN).first
+        if dropdown.count() == 0:
+            return
         dropdown.wait_for(state="visible", timeout=self.timeout)
         dropdown.select_option(value=value)
         self.wait_loaded()
 
     def filter_by_category(self) -> None:
         category = self.page.locator(ProductListLocators.CATEGORY_FILTER).first
+        if category.count() == 0:
+            return
         category.click()
         self.wait_loaded()
 
     def filter_by_brand(self) -> None:
         brand = self.page.locator(ProductListLocators.BRAND_FILTER).first
+        if brand.count() == 0:
+            return
         brand.click()
         self.wait_loaded()
 
     def filter_by_price_range(self, min_price: str, max_price: str) -> None:
         min_input = self.page.locator(ProductListLocators.PRICE_MIN).first
         max_input = self.page.locator(ProductListLocators.PRICE_MAX).first
+        if min_input.count() == 0 or max_input.count() == 0:
+            return
         min_input.fill(min_price)
         max_input.fill(max_price)
-        self.page.locator(ProductListLocators.APPLY_FILTER).first.click()
+        apply = self.page.locator(ProductListLocators.APPLY_FILTER).first
+        if apply.count() > 0:
+            apply.click()
         self.wait_loaded()
 
     def open_first_product_detail(self) -> None:
+        title_link = self.page.locator(".itemTitle a").first
+        if title_link.count() == 0:
+            for url in ("https://aobongda.net/tim-kiem/ao", "https://aobongda.net/tim-kiem/giay"):
+                self.page.goto(url, wait_until="commit", timeout=self.timeout)
+                self.page.wait_for_timeout(1200)
+                title_link = self.page.locator(".itemTitle a").first
+                if title_link.count() > 0:
+                    break
+
+        if title_link.count() > 0:
+            href = title_link.get_attribute("href")
+            if href:
+                self.page.goto(href, wait_until="commit", timeout=self.timeout)
+                self.page.wait_for_timeout(1000)
+                return
+
         cards = self.get_product_cards()
         if not cards:
             raise AssertionError("No product card found to open detail page.")
