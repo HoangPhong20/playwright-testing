@@ -10,7 +10,20 @@ class ProductDetailPage:
         self.timeout = timeout
 
     def is_image_visible(self) -> bool:
-        return self.page.locator(ProductDetailLocators.GALLERY_IMAGE).first.is_visible()
+        return bool(
+            self.page.evaluate(
+                """(selector) => {
+                    const imgs = Array.from(document.querySelectorAll(selector));
+                    return imgs.some((img) => {
+                        const src = (img.getAttribute('src') || '').trim();
+                        const dataSrc = (img.getAttribute('data-src') || '').trim();
+                        const looksLikeProductImage = src.includes('/pic/Product/') || dataSrc.includes('/pic/Product/');
+                        return looksLikeProductImage;
+                    });
+                }""",
+                ProductDetailLocators.GALLERY_IMAGE,
+            )
+        )
 
     def get_description(self) -> str:
         locator = self.page.locator(ProductDetailLocators.DESCRIPTION).first

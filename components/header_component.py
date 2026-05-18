@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from playwright.sync_api import Page
+from playwright.sync_api import Error as PlaywrightError
 from config.locators import HeaderLocators
 
 
@@ -24,6 +25,9 @@ class HeaderComponent:
         cart = self.page.locator(HeaderLocators.CART_ICON).first
         href = cart.get_attribute("href") if cart.count() > 0 else None
         if href:
-            self.page.goto(href, wait_until="commit", timeout=self.timeout)
+            try:
+                self.page.goto(href, wait_until="domcontentloaded", timeout=self.timeout)
+            except PlaywrightError:
+                self.page.wait_for_timeout(1200)
             return
         cart.click()

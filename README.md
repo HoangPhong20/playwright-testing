@@ -9,7 +9,7 @@ python -m playwright install
 ```
 
 ## 2) Config
-Copy `.env.example` to `.env` and update values if needed.
+Create `.env` in project root and add required values.
 
 ## 3) Run tests
 ```powershell

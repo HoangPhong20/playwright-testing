@@ -90,21 +90,28 @@ class ProductListPage:
         self.wait_loaded()
 
     def open_first_product_detail(self) -> None:
-        title_link = self.page.locator(".itemTitle a").first
+        self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
+        title_link = self.page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).first
         if title_link.count() == 0:
             for url in ("https://aobongda.net/tim-kiem/ao", "https://aobongda.net/tim-kiem/giay"):
-                self.page.goto(url, wait_until="commit", timeout=self.timeout)
+                self.page.goto(url, wait_until="domcontentloaded", timeout=self.timeout)
                 self.page.wait_for_timeout(1200)
-                title_link = self.page.locator(".itemTitle a").first
+                title_link = self.page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).first
                 if title_link.count() > 0:
                     break
 
         if title_link.count() > 0:
-            href = title_link.get_attribute("href")
-            if href:
-                self.page.goto(href, wait_until="commit", timeout=self.timeout)
+            try:
+                title_link.click()
+                self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
                 self.page.wait_for_timeout(1000)
                 return
+            except PlaywrightTimeoutError:
+                href = title_link.get_attribute("href")
+                if href:
+                    self.page.goto(href, wait_until="domcontentloaded", timeout=self.timeout)
+                    self.page.wait_for_timeout(1000)
+                    return
 
         cards = self.get_product_cards()
         if not cards:

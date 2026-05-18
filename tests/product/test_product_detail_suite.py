@@ -1,13 +1,15 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import pytest
 from pages.home_page import HomePage
 from pages.product_list_page import ProductListPage
 from pages.product_detail_page import ProductDetailPage
+from config.locators import ProductListLocators
 from config.settings import TIMEOUT
 
 
 @pytest.mark.smoke
+@pytest.mark.regression
 def test_view_product_detail(page, base_url):
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
@@ -15,12 +17,13 @@ def test_view_product_detail(page, base_url):
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    if page.locator(".itemTitle a").count() == 0:
-        page.goto("https://aobongda.net/tim-kiem/ao", wait_until="commit", timeout=TIMEOUT)
-    if page.locator(".itemTitle a").count() == 0:
-        page.goto("https://aobongda.net/tim-kiem/giay", wait_until="commit", timeout=TIMEOUT)
-    if page.locator(".itemTitle a").count() == 0:
-        pytest.skip("No product detail link available on current page data.")
+    if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
+        page.goto("https://aobongda.net/tim-kiem/ao", wait_until="domcontentloaded", timeout=TIMEOUT)
+    if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
+        page.goto("https://aobongda.net/tim-kiem/giay", wait_until="domcontentloaded", timeout=TIMEOUT)
+    assert page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0, (
+        "No product detail link found. Listing locator may be outdated or site has no products."
+    )
     listing.open_first_product_detail()
 
     assert detail.is_image_visible(), "Expected product image to be visible."
