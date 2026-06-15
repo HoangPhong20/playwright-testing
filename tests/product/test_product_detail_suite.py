@@ -18,9 +18,9 @@ def test_view_product_detail(page, base_url):
     home.open(base_url)
     home.accept_cookie_if_present()
     if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        page.goto("https://aobongda.net/tim-kiem/ao", wait_until="domcontentloaded", timeout=TIMEOUT)
+        listing.open_search_listing("ao")
     if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        page.goto("https://aobongda.net/tim-kiem/giay", wait_until="domcontentloaded", timeout=TIMEOUT)
+        listing.open_search_listing("giày")
     assert page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0, (
         "No product detail link found. Listing locator may be outdated or site has no products."
     )

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from urllib.parse import quote, urlsplit
+
 from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError
 from config.locators import ProductListLocators
 from components.product_card_component import ProductCardComponent
 from utils.price_utils import parse_price_to_int
-from utils.wait_utils import wait_for_products_loaded
+from utils.wait_utils import wait_for_product_detail_loaded, wait_for_products_loaded
 
 
 class ProductListPage:
@@ -55,12 +57,17 @@ class ProductListPage:
             return ProductListLocators.SEARCH_PRODUCT_PRICE
         return ProductListLocators.HOME_PRODUCT_PRICE
 
-    def sort_by_value(self, value: str) -> None:
-        dropdown = self.page.locator(ProductListLocators.SORT_DROPDOWN).first
-        if dropdown.count() == 0:
-            return
-        dropdown.wait_for(state="visible", timeout=self.timeout)
-        dropdown.select_option(value=value)
+    def open_search_listing(self, keyword: str) -> None:
+        keyword = keyword.strip()
+        parsed = urlsplit(self.page.url)
+        if not parsed.scheme or not parsed.netloc:
+            raise AssertionError("Cannot derive base URL from current page.")
+
+        self.page.goto(
+            f"{parsed.scheme}://{parsed.netloc}/tim-kiem/{quote(keyword)}",
+            wait_until="domcontentloaded",
+            timeout=self.timeout,
+        )
         self.wait_loaded()
 
     def filter_by_category(self) -> None:
@@ -93,9 +100,8 @@ class ProductListPage:
         self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
         title_link = self.page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).first
         if title_link.count() == 0:
-            for url in ("https://aobongda.net/tim-kiem/ao", "https://aobongda.net/tim-kiem/giay"):
-                self.page.goto(url, wait_until="domcontentloaded", timeout=self.timeout)
-                self.page.wait_for_timeout(1200)
+            for keyword in ("ao", "giày"):
+                self.open_search_listing(keyword)
                 title_link = self.page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).first
                 if title_link.count() > 0:
                     break
@@ -104,13 +110,13 @@ class ProductListPage:
             try:
                 title_link.click()
                 self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
-                self.page.wait_for_timeout(1000)
+                wait_for_product_detail_loaded(self.page, self.timeout)
                 return
             except PlaywrightTimeoutError:
                 href = title_link.get_attribute("href")
                 if href:
                     self.page.goto(href, wait_until="domcontentloaded", timeout=self.timeout)
-                    self.page.wait_for_timeout(1000)
+                    wait_for_product_detail_loaded(self.page, self.timeout)
                     return
 
         cards = self.get_product_cards()

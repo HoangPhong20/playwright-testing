@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from urllib.parse import quote, urlsplit
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+
 from pages.base_page import BasePage
 from components.header_component import HeaderComponent
 
@@ -21,5 +23,9 @@ class HomePage(BasePage):
                 wait_until="commit",
                 timeout=self.timeout,
             )
+            try:
+                self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
+            except PlaywrightTimeoutError:
+                pass
             return
         self.header.search(keyword)

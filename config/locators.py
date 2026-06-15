@@ -31,10 +31,6 @@ class ProductListLocators:
     PRODUCT_CARDS = ".list_sp .item, .productHome .itemBox"
     PRODUCT_NAME = ".itemTitle, h2, h3, .product-title"
     PRODUCT_PRICE = ".listPrice .subItem span, .listPrice span, .price"
-    SORT_DROPDOWN = (
-        "select.orderby, select[name*='orderby'], select[name*='sort'], "
-        ".sort select, .sapxep select, .order select"
-    )
     FILTER_PANEL = (
         ".widget, .filter, [class*='filter'], .cateLeft, .cateContent, "
         ".box.cate, .menuMain .subMenuTop"
@@ -80,4 +76,55 @@ class CartLocators:
     CONTINUE_SHOPPING = (
         "a.tiepTucMua, a:has-text('Tiếp tục mua hàng'), "
         "a:has-text('Ti?p t?c mua hàng')"
+    )
+    CUSTOMER_NAME = (
+        ".thongTinGiaoHang input[placeholder*='Họ'], "
+        ".thongTinGiaoHang input[placeholder*='Ho'], "
+        "form.checkout input[name*='name'], input[name*='Name']"
+    )
+    CUSTOMER_PHONE = (
+        ".thongTinGiaoHang input[placeholder*='Điện thoại'], "
+        ".thongTinGiaoHang input[placeholder*='Dien thoai'], "
+        "form.checkout input[type='tel'], input[name*='phone'], input[name*='Phone']"
+    )
+    PROVINCE_SELECT = (
+        ".thongTinGiaoHang select:has-text('Tỉnh'), "
+        ".thongTinGiaoHang select:has-text('Thành phố'), "
+        ".thongTinGiaoHang select:has-text('Tinh')"
+    )
+    DISTRICT_SELECT = (
+        ".thongTinGiaoHang select:has-text('Quận'), "
+        ".thongTinGiaoHang select:has-text('Huyện'), "
+        ".thongTinGiaoHang select:has-text('Quan')"
+    )
+    WARD_INPUT = (
+        ".thongTinGiaoHang input[placeholder*='Phường'], "
+        ".thongTinGiaoHang input[placeholder*='Xã'], "
+        ".thongTinGiaoHang input[placeholder*='Phuong'], "
+        ".thongTinGiaoHang input[name*='ward'], input[name*='Ward']"
+    )
+    SHIPPING_ADDRESS = (
+        ".thongTinGiaoHang input[placeholder*='Địa chỉ'], "
+        ".thongTinGiaoHang input[placeholder*='Dia chi'], "
+        "form.checkout input[name*='address'], input[name*='Address']"
+    )
+    SHIPPING_NOTE = (
+        ".thongTinGiaoHang textarea[placeholder*='Ghi chú'], "
+        ".thongTinGiaoHang textarea[placeholder*='Ghi chu'], "
+        "form.checkout textarea"
+    )
+    COMPLETE_ORDER = (
+        "button:has-text('HOÀN TẤT ĐƠN HÀNG'), "
+        "button:has-text('Hoàn tất đơn hàng'), "
+        "input[type='submit'][value*='HOÀN TẤT'], "
+        "input[type='button'][value*='HOÀN TẤT'], "
+        "a:has-text('HOÀN TẤT ĐƠN HÀNG')"
+    )
+    ORDER_SUCCESS_TEXT = (
+        "text=/đặt hàng thành công|dat hang thanh cong|cảm ơn|thank you|order received/i"
+    )
+    CHECKOUT_VALIDATION_FEEDBACK = (
+        "text=/giỏ hàng trống|gio hang trong|chưa có sản phẩm|chua co san pham|"
+        "không có sản phẩm|khong co san pham|vui lòng|vui long|bắt buộc|bat buoc|"
+        "không hợp lệ|khong hop le|lỗi|loi|error/i"
     )

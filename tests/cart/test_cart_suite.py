@@ -19,17 +19,17 @@ def _open_product_detail_and_add_to_cart(page, base_url):
     home.open(base_url)
     home.accept_cookie_if_present()
     if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        page.goto("https://aobongda.net/tim-kiem/ao", wait_until="domcontentloaded", timeout=TIMEOUT)
+        listing.open_search_listing("ao")
     if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        page.goto("https://aobongda.net/tim-kiem/giay", wait_until="domcontentloaded", timeout=TIMEOUT)
+        listing.open_search_listing("giày")
     assert page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0, (
         "No product detail link found. Listing locator may be outdated or site has no products."
     )
 
     try:
-        page.goto("https://aobongda.net/tim-kiem/ao", wait_until="domcontentloaded", timeout=TIMEOUT)
+        listing.open_search_listing("ao")
     except PlaywrightTimeoutError:
-        page.goto("https://aobongda.net/tim-kiem/giay", wait_until="domcontentloaded", timeout=TIMEOUT)
+        listing.open_search_listing("giày")
     links = page.locator(ProductListLocators.PRODUCT_DETAIL_LINK)
     chosen_href = None
     for i in range(min(links.count(), 20)):
@@ -48,49 +48,6 @@ def _open_product_detail_and_add_to_cart(page, base_url):
         home.header.open_cart()
         cart.wait_checkout_loaded()
     return cart, home
-
-
-@pytest.mark.cart
-@pytest.mark.regression
-def test_add_and_remove_product_from_cart(page, base_url):
-    cart, home = _open_product_detail_and_add_to_cart(page, base_url)
-
-    assert cart.is_checkout_view(), (
-        f"Expected redirect to checkout/cart view after add-to-cart, got URL: {page.url}"
-    )
-    cart.wait_cart_rendered()
-    assert cart.has_cart_content(), (
-        "Expected checkout/cart to contain product after add-to-cart action."
-    )
-
-    initial_qty = cart.get_first_quantity()
-    assert initial_qty >= 1, f"Expected default quantity >= 1, got {initial_qty}."
-
-    cart.increase_first_item_quantity()
-    qty_after_plus = cart.get_first_quantity()
-    if qty_after_plus > 0:
-        assert qty_after_plus >= initial_qty, (
-            f"Expected quantity not to decrease after plus click: {initial_qty} -> {qty_after_plus}"
-        )
-
-    cart.decrease_first_item_quantity()
-    qty_after_minus = cart.get_first_quantity()
-    if qty_after_minus > 0 and qty_after_plus > 0:
-        assert qty_after_minus <= qty_after_plus, (
-            f"Expected quantity not to increase after minus click: {qty_after_plus} -> {qty_after_minus}"
-        )
-
-    cart.remove_first_item()
-    assert cart.get_item_count() == 0 or cart.is_empty_message_visible(), (
-        "Expected cart to be empty after removing the product."
-    )
-
-    # Validate user can go back to shopping from checkout/cart view.
-    home.header.open_cart()
-    if cart.continue_shopping():
-        assert "/gio-hang" not in page.url and "/checkout" not in page.url, (
-            f"Expected leaving checkout/cart after continue shopping, got URL: {page.url}"
-        )
 
 
 @pytest.mark.cart

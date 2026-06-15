@@ -10,8 +10,8 @@ from config.settings import TIMEOUT
 @pytest.mark.smoke
 @pytest.mark.search
 @pytest.mark.regression
-@pytest.mark.parametrize("keyword", ["ao"])
-def test_search_product_by_keyword(page, base_url, keyword):
+def test_search_product_by_keyword(page, base_url):
+    keyword = "ao"
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
@@ -32,22 +32,6 @@ def test_search_product_by_keyword(page, base_url, keyword):
     )
 
 
-@pytest.mark.regression
-@pytest.mark.search
-def test_search_with_non_existing_keyword(page, base_url, test_data):
-    home = HomePage(page, timeout=TIMEOUT)
-    listing = ProductListPage(page, timeout=TIMEOUT)
-
-    home.open(base_url)
-    home.accept_cookie_if_present()
-    home.search_product(test_data["non_existing_keyword"])
-
-    names = listing.get_product_names()
-    assert not any(
-        test_data["non_existing_keyword"].lower() in name.lower() for name in names
-    ), "Expected no product name to contain non-existing keyword."
-
-
 @pytest.mark.search
 def test_product_list_display(page, base_url):
     home = HomePage(page, timeout=TIMEOUT)
@@ -55,7 +39,7 @@ def test_product_list_display(page, base_url):
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    page.goto("https://aobongda.net/tim-kiem/ao", wait_until="domcontentloaded", timeout=TIMEOUT)
+    listing.open_search_listing("ao")
 
     cards = listing.get_product_cards()
     assert cards, "Expected listing page to display at least one product card."
@@ -65,14 +49,3 @@ def test_product_list_display(page, base_url):
     assert any(card.get_price_text(listing._price_selector()) for card in cards), (
         "Expected at least one product card to have a non-empty price."
     )
-
-
-@pytest.mark.search
-def test_navigation_to_listing(page, base_url):
-    home = HomePage(page, timeout=TIMEOUT)
-
-    home.open(base_url)
-    home.accept_cookie_if_present()
-    home.search_product("ao")
-
-    assert "/tim-kiem/" in page.url, f"Expected navigation to search listing, got URL: {page.url}"

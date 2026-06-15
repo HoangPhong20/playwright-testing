@@ -16,7 +16,11 @@ ENV/
 .cache/
 
 # Playwright/test reports and runtime outputs
-reports/
+reports/*
+!reports/test-results.md
+!reports/screenshots/
+!reports/screenshots/*.png
+reports/screenshots/removed/
 test-results/
 playwright-report/
 trace.zip

@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+import re
 import pytest
 from playwright.sync_api import Playwright, sync_playwright
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 from config.settings import BASE_URL, BROWSER, HEADLESS, TIMEOUT
 from fixtures.data_loader import load_test_data
+from utils.test_case_registry import TEST_CASE_BY_KEY, test_case_key
 
 
 @pytest.fixture(scope="session")
@@ -49,6 +52,27 @@ def test_data() -> dict:
     return load_test_data()
 
 
+def pytest_sessionstart(session):
+    if session.config.option.collectonly:
+        return
+    reports = Path("reports")
+    reports.mkdir(parents=True, exist_ok=True)
+    result_file = reports / "test-results.md"
+    result_file.write_text(
+        "# Test Run Results\n\n"
+        "| ID | Testcase | Status | Screenshot |\n"
+        "| --- | --- | --- | --- |\n",
+        encoding="utf-8",
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    for index, item in enumerate(items, start=1):
+        case = TEST_CASE_BY_KEY.get(_item_test_case_key(item))
+        item.test_case_id = case["id"] if case else f"TC-{index:03d}"
+        item.test_case_title = case["title"] if case else item.name
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     outcome = yield
@@ -56,16 +80,77 @@ def pytest_runtest_makereport(item, call):
     setattr(item, f"rep_{report.when}", report)
 
 
+def _safe_file_name(value: str, max_length: int = 120) -> str:
+    safe_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", value).strip("_")
+    return safe_name[:max_length] or "testcase"
+
+
+def _report_status(report) -> str:
+    if report and report.outcome == "passed":
+        return "pass"
+    return "fail"
+
+
+def _item_test_case_key(item) -> tuple:
+    path = Path(str(item.path)).as_posix()
+    try:
+        path = Path(str(item.path)).relative_to(Path.cwd()).as_posix()
+    except ValueError:
+        pass
+    function = getattr(item, "originalname", None) or item.name.split("[", 1)[0]
+    params = getattr(getattr(item, "callspec", None), "params", None)
+    return test_case_key(path, function, params)
+
+
+def _append_test_result(case_id: str, title: str, status: str, screenshot: Path | None) -> None:
+    screenshot_link = ""
+    if screenshot:
+        screenshot_link = screenshot.as_posix()
+    line = f"| {case_id} | {title} | {status} | {screenshot_link} |\n"
+    with (Path("reports") / "test-results.md").open("a", encoding="utf-8") as report:
+        report.write(line)
+
+
+def _capture_test_screenshot(page, screenshot_path: Path) -> bool:
+    screenshot_options = [
+        {"full_page": True, "animations": "disabled", "timeout": min(TIMEOUT, 30000)},
+        {"full_page": False, "animations": "disabled", "timeout": min(TIMEOUT, 30000)},
+    ]
+    for _ in range(3):
+        try:
+            page.wait_for_load_state("domcontentloaded", timeout=5000)
+        except PlaywrightError:
+            pass
+        try:
+            page.locator("body").wait_for(state="attached", timeout=5000)
+        except PlaywrightError:
+            pass
+        for options in screenshot_options:
+            try:
+                page.screenshot(path=str(screenshot_path), **options)
+                return True
+            except PlaywrightError:
+                continue
+        try:
+            page.wait_for_timeout(1000)
+        except PlaywrightError:
+            break
+    return False
+
+
 @pytest.fixture(autouse=True)
-def screenshot_on_failure(request, page):
+def screenshot_after_test(request, page):
     yield
     rep_call = getattr(request.node, "rep_call", None)
-    if rep_call and rep_call.failed:
-        reports = Path("reports")
-        reports.mkdir(exist_ok=True)
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"{request.node.name}_{ts}.png"
-        try:
-            page.screenshot(path=str(reports / file_name), full_page=True)
-        except PlaywrightTimeoutError:
-            pass
+    screenshots = Path("reports") / "screenshots"
+    screenshots.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    safe_test_name = _safe_file_name(request.node.name)
+    status = _report_status(rep_call)
+    case_id = getattr(request.node, "test_case_id", "TC-000")
+    title = getattr(request.node, "test_case_title", request.node.name)
+    file_name = f"{case_id}_{status}_{safe_test_name}_{ts}.png"
+    screenshot_path = screenshots / file_name
+    if not _capture_test_screenshot(page, screenshot_path):
+        screenshot_path = None
+    _append_test_result(case_id, title, status, screenshot_path)
