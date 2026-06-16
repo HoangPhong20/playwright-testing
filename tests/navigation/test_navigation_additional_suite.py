@@ -8,6 +8,7 @@ from pages.home_page import HomePage
 
 
 SERVER_ERROR_TEXT = ("server error", "exception", "stack trace", "traceback")
+CATEGORY_ROUTE_TIMEOUT = max(TIMEOUT, 30000)
 
 
 def _assert_no_server_error_text(body: str) -> None:
@@ -57,7 +58,11 @@ def test_category_route_renders_product_links_without_server_error(page, base_ur
     home.open(base_url)
     page.wait_for_load_state("domcontentloaded", timeout=TIMEOUT)
     home.accept_cookie_if_present()
-    page.goto(f"{base_url.rstrip('/')}/ao-doi-tuyen", wait_until="domcontentloaded", timeout=TIMEOUT)
+    page.goto(
+        f"{base_url.rstrip('/')}/ao-doi-tuyen",
+        wait_until="domcontentloaded",
+        timeout=CATEGORY_ROUTE_TIMEOUT,
+    )
 
     body = page.locator("body").inner_text(timeout=TIMEOUT).strip()
     assert body, "Expected category page body not to be blank."

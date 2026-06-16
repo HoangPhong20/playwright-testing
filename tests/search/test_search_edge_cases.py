@@ -26,7 +26,6 @@ def _page_error(page, base_url: str) -> str | None:
 
 def _assert_keyword_group_is_handled(page, base_url: str, keywords: list[str]) -> None:
     home = HomePage(page, timeout=TIMEOUT)
-    failures: list[str] = []
 
     for keyword in keywords:
         home.open(base_url)
@@ -34,10 +33,7 @@ def _assert_keyword_group_is_handled(page, base_url: str, keywords: list[str]) -
         home.search_product(keyword)
 
         error = _page_error(page, base_url)
-        if error:
-            failures.append(f"{keyword!r}: {error}")
-
-    assert not failures, "Expected all keyword variants to be handled:\n" + "\n".join(failures)
+        assert not error, f"Expected keyword {keyword!r} to be handled, but {error}"
 
 
 @pytest.mark.search

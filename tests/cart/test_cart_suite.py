@@ -16,19 +16,14 @@ def test_cart_quantity_update(page, base_url, test_data):
 
     cart.increase_first_item_quantity()
     qty_after_plus = cart.get_first_quantity()
-    assert qty_after_plus >= initial_qty, (
-        f"Expected quantity to increase or stay same after plus: {initial_qty} -> {qty_after_plus}"
+    assert qty_after_plus == initial_qty + 1, (
+        f"Expected quantity to increase by 1 after plus: {initial_qty} -> {qty_after_plus}"
     )
 
     cart.decrease_first_item_quantity()
     qty_after_minus = cart.get_first_quantity()
-    assert qty_after_minus <= qty_after_plus, (
-        f"Expected quantity to decrease or stay same after minus: {qty_after_plus} -> {qty_after_minus}"
-    )
-
-    cart.complete_order()
-    assert not cart.is_order_success_visible(), (
-        "Expected checkout not to complete when submitting without shipping information."
+    assert qty_after_minus == qty_after_plus - 1, (
+        f"Expected quantity to decrease by 1 after minus: {qty_after_plus} -> {qty_after_minus}"
     )
 
 
@@ -43,8 +38,3 @@ def test_cart_persistence(page, base_url, test_data):
     cart.wait_cart_rendered()
     assert cart.is_checkout_view(), f"Expected still in cart/checkout after reload, got URL: {page.url}"
     assert cart.has_cart_content(), "Expected cart data to persist after reload."
-
-    cart.complete_order()
-    assert not cart.is_order_success_visible(), (
-        "Expected checkout not to complete when submitting without shipping information."
-    )

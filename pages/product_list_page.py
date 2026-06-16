@@ -15,10 +15,7 @@ class ProductListPage:
         self.timeout = timeout
 
     def wait_loaded(self) -> None:
-        try:
-            wait_for_products_loaded(self.page, self.timeout)
-        except PlaywrightTimeoutError:
-            pass
+        wait_for_products_loaded(self.page, self.timeout)
 
     def get_product_cards(self) -> list[ProductCardComponent]:
         cards = self.page.locator(self._card_selector())
@@ -66,7 +63,7 @@ class ProductListPage:
         self.page.goto(
             f"{parsed.scheme}://{parsed.netloc}/tim-kiem/{quote(keyword)}",
             wait_until="domcontentloaded",
-            timeout=self.timeout,
+            timeout=max(self.timeout, 30000),
         )
         self.wait_loaded()
 

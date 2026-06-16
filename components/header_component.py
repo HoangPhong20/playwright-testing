@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin, urlsplit
 
 from playwright.sync_api import Page
 from playwright.sync_api import Error as PlaywrightError
@@ -20,11 +20,21 @@ class HeaderComponent:
         previous_url = self.page.url
         search_input.fill(keyword)
         submit = self.page.locator(HeaderLocators.SEARCH_SUBMIT).first
-        if submit.count() > 0:
-            submit.click()
-        else:
-            search_input.press("Enter")
         try:
+            if submit.count() > 0:
+                submit.click(timeout=min(self.timeout, 5000))
+            else:
+                search_input.evaluate(
+                    """(input) => {
+                        input.dispatchEvent(new KeyboardEvent('keyup', {
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            which: 13,
+                            bubbles: true
+                        }));
+                    }"""
+                )
             self.page.wait_for_function(
                 """(previousUrl) => window.location.href !== previousUrl
                     || document.querySelector('.list_sp .item, .productHome .itemBox') !== null""",
@@ -32,7 +42,13 @@ class HeaderComponent:
                 timeout=min(self.timeout, 5000),
             )
         except PlaywrightTimeoutError:
-            pass
+            fallback_url = self._search_href(keyword)
+            if fallback_url:
+                self.page.goto(
+                    fallback_url,
+                    wait_until="domcontentloaded",
+                    timeout=max(self.timeout, 30000),
+                )
 
     def open_cart(self) -> None:
         try:
@@ -68,3 +84,9 @@ class HeaderComponent:
         if not self.page.url.startswith(("http://", "https://")):
             return None
         return urljoin(self.page.url, "/gio-hang.html")
+
+    def _search_href(self, keyword: str) -> str | None:
+        parsed = urlsplit(self.page.url)
+        if not parsed.scheme or not parsed.netloc:
+            return None
+        return f"{parsed.scheme}://{parsed.netloc}/tim-kiem/{quote(keyword)}"

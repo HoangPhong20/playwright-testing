@@ -20,10 +20,7 @@ class CartPage:
         return self.page.locator(CartLocators.CART_ITEMS).count()
 
     def wait_cart_rendered(self) -> None:
-        try:
-            wait_for_cart_rendered(self.page, self.timeout)
-        except PlaywrightTimeoutError:
-            pass
+        wait_for_cart_rendered(self.page, self.timeout)
 
     def has_cart_content(self) -> bool:
         if self.get_item_count() > 0:
@@ -49,10 +46,7 @@ class CartPage:
             self.page.wait_for_load_state("domcontentloaded", timeout=self.timeout)
         except PlaywrightTimeoutError:
             pass
-        try:
-            wait_for_checkout_ready(self.page, self.timeout)
-        except PlaywrightTimeoutError:
-            pass
+        wait_for_checkout_ready(self.page, self.timeout)
 
     def get_first_quantity(self) -> int:
         qty = self.page.locator(CartLocators.QUANTITY_INPUT).first
@@ -63,10 +57,12 @@ class CartPage:
         return int(digits) if digits else 0
 
     def increase_first_item_quantity(self) -> None:
+        previous_value = self._first_quantity_value()
+        if self._step_first_quantity("ArrowUp", previous_value):
+            return
         plus = self.page.locator(CartLocators.INCREASE_BUTTON).first
         if plus.count() == 0:
             return
-        previous_value = self._first_quantity_value()
         plus.click()
         try:
             wait_for_quantity_value(self.page, previous_value, self.timeout)
@@ -74,10 +70,12 @@ class CartPage:
             pass
 
     def decrease_first_item_quantity(self) -> None:
+        previous_value = self._first_quantity_value()
+        if self._step_first_quantity("ArrowDown", previous_value):
+            return
         minus = self.page.locator(CartLocators.DECREASE_BUTTON).first
         if minus.count() == 0:
             return
-        previous_value = self._first_quantity_value()
         minus.click()
         try:
             wait_for_quantity_value(self.page, previous_value, self.timeout)
@@ -249,3 +247,16 @@ class CartPage:
         if qty.count() == 0:
             return ""
         return (qty.input_value() or "").strip()
+
+    def _step_first_quantity(self, key: str, previous_value: str) -> bool:
+        qty = self.page.locator(CartLocators.QUANTITY_INPUT).first
+        if qty.count() == 0:
+            return False
+        qty.wait_for(state="visible", timeout=self.timeout)
+        qty.focus()
+        qty.press(key)
+        try:
+            wait_for_quantity_value(self.page, previous_value, self.timeout)
+            return True
+        except PlaywrightTimeoutError:
+            return False
