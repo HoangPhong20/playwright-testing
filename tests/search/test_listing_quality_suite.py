@@ -11,13 +11,14 @@ from pages.product_list_page import ProductListPage
 @pytest.mark.search
 @pytest.mark.regression
 @pytest.mark.edge
-def test_listing_prices_are_parseable_positive_values(page, base_url):
+def test_listing_prices_are_parseable_positive_values(page, base_url, test_data):
+    keyword = test_data["search"]["primary_keyword"]
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    listing.open_search_listing("ao")
+    listing.open_search_listing(keyword)
 
     prices = listing.get_price_values()
     assert prices, "Expected listing to expose at least one parseable product price."
@@ -29,13 +30,14 @@ def test_listing_prices_are_parseable_positive_values(page, base_url):
 @pytest.mark.search
 @pytest.mark.regression
 @pytest.mark.edge
-def test_listing_product_images_have_valid_sources(page, base_url):
+def test_listing_product_images_have_valid_sources(page, base_url, test_data):
+    keyword = test_data["search"]["primary_keyword"]
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    listing.open_search_listing("ao")
+    listing.open_search_listing(keyword)
 
     image_sources = page.evaluate(
         """(cardSelector) => {

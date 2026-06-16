@@ -123,8 +123,30 @@ class CartLocators:
     ORDER_SUCCESS_TEXT = (
         "text=/đặt hàng thành công|dat hang thanh cong|cảm ơn|thank you|order received/i"
     )
-    CHECKOUT_VALIDATION_FEEDBACK = (
+    EMPTY_CHECKOUT_VALIDATION_FEEDBACK = (
         "text=/giỏ hàng trống|gio hang trong|chưa có sản phẩm|chua co san pham|"
-        "không có sản phẩm|khong co san pham|vui lòng|vui long|bắt buộc|bat buoc|"
-        "không hợp lệ|khong hop le|lỗi|loi|error/i"
+        "không có sản phẩm|khong co san pham|empty cart|cart empty/i"
+    )
+    PHONE_VALIDATION_FEEDBACK = (
+        "text=/chỉ được nhập số|chi duoc nhap so|số điện thoại.*(số|không hợp lệ|bắt buộc)|"
+        "so dien thoai.*(so|khong hop le|bat buoc)|phone.*(number|numeric|invalid|required)|"
+        "tel.*(number|numeric|invalid|required)/i"
+    )
+    NAME_VALIDATION_FEEDBACK = (
+        "text=/không được nhập số|khong duoc nhap so|không nhập số|khong nhap so|"
+        "không chứa số|khong chua so|họ tên.*(không hợp lệ|bắt buộc)|"
+        "ho ten.*(khong hop le|bat buoc)|tên.*(không hợp lệ|bắt buộc)|"
+        "ten.*(khong hop le|bat buoc)|name.*(invalid|required)|digit/i"
+    )
+    ADDRESS_VALIDATION_FEEDBACK = (
+        "text=/địa chỉ.*(không hợp lệ|bắt buộc|không được|ký tự)|"
+        "dia chi.*(khong hop le|bat buoc|khong duoc|ky tu)|"
+        "address.*(invalid|required|special character)|vui lòng.*địa chỉ|vui long.*dia chi/i"
+    )
+    WARD_VALIDATION_FEEDBACK = (
+        "text=/phường.*(không hợp lệ|bắt buộc|không được|ký tự)|"
+        "phuong.*(khong hop le|bat buoc|khong duoc|ky tu)|"
+        "xã.*(không hợp lệ|bắt buộc|không được|ký tự)|"
+        "xa.*(khong hop le|bat buoc|khong duoc|ky tu)|"
+        "ward.*(invalid|required|special character)/i"
     )

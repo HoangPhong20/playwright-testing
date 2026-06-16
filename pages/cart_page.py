@@ -126,9 +126,16 @@ class CartPage:
         self._fill_if_present(CartLocators.SHIPPING_NOTE, note)
 
     def get_ward_value(self) -> str:
-        ward = self.page.locator(CartLocators.WARD_INPUT).first
-        ward.wait_for(state="visible", timeout=self.timeout)
-        return (ward.input_value() or "").strip()
+        return self._input_value(CartLocators.WARD_INPUT)
+
+    def get_name_value(self) -> str:
+        return self._input_value(CartLocators.CUSTOMER_NAME)
+
+    def get_phone_value(self) -> str:
+        return self._input_value(CartLocators.CUSTOMER_PHONE)
+
+    def get_address_value(self) -> str:
+        return self._input_value(CartLocators.SHIPPING_ADDRESS)
 
     def complete_order(self) -> None:
         button = self.page.locator(CartLocators.COMPLETE_ORDER).first
@@ -146,10 +153,60 @@ class CartPage:
         except Exception:
             return False
 
-    def has_checkout_validation_feedback(self) -> bool:
+    def has_empty_checkout_validation_feedback(self) -> bool:
+        return self._has_visible_feedback(CartLocators.EMPTY_CHECKOUT_VALIDATION_FEEDBACK)
+
+    def has_phone_validation_feedback(self) -> bool:
+        return self._has_field_validation_feedback(
+            CartLocators.PHONE_VALIDATION_FEEDBACK,
+            CartLocators.CUSTOMER_PHONE,
+        )
+
+    def has_name_validation_feedback(self) -> bool:
+        return self._has_field_validation_feedback(
+            CartLocators.NAME_VALIDATION_FEEDBACK,
+            CartLocators.CUSTOMER_NAME,
+        )
+
+    def has_address_validation_feedback(self) -> bool:
+        return self._has_field_validation_feedback(
+            CartLocators.ADDRESS_VALIDATION_FEEDBACK,
+            CartLocators.SHIPPING_ADDRESS,
+        )
+
+    def has_ward_validation_feedback(self) -> bool:
+        return self._has_field_validation_feedback(
+            CartLocators.WARD_VALIDATION_FEEDBACK,
+            CartLocators.WARD_INPUT,
+        )
+
+    def _has_visible_feedback(self, selector: str) -> bool:
         try:
-            feedback = self.page.locator(CartLocators.CHECKOUT_VALIDATION_FEEDBACK).first
+            feedback = self.page.locator(selector).first
             return feedback.count() > 0 and feedback.is_visible()
+        except Exception:
+            return False
+
+    def _has_field_validation_feedback(self, feedback_selector: str, field_selector: str) -> bool:
+        return (
+            self._has_visible_feedback(feedback_selector)
+            or self._has_html5_validation_message(field_selector)
+        )
+
+    def _has_html5_validation_message(self, field_selector: str) -> bool:
+        try:
+            return bool(
+                self.page.evaluate(
+                    """(selector) => {
+                        const fields = Array.from(document.querySelectorAll(selector));
+                        return fields.some((field) => {
+                            if (typeof field.checkValidity !== 'function') return false;
+                            return !field.checkValidity() && Boolean(field.validationMessage);
+                        });
+                    }""",
+                    field_selector,
+                )
+            )
         except Exception:
             return False
 
@@ -160,17 +217,31 @@ class CartPage:
         field.wait_for(state="visible", timeout=self.timeout)
         field.fill(value)
 
+    def _input_value(self, selector: str) -> str:
+        field = self.page.locator(selector).first
+        field.wait_for(state="visible", timeout=self.timeout)
+        return (field.input_value() or "").strip()
+
     def _select_first_available_option(self, selector: str) -> None:
         select = self.page.locator(selector).first
         if select.count() == 0:
             return
         select.wait_for(state="visible", timeout=self.timeout)
-        options = select.locator("option")
-        for index in range(options.count()):
-            value = (options.nth(index).get_attribute("value") or "").strip()
-            label = (options.nth(index).inner_text() or "").strip()
-            if value and "*" not in label:
-                select.select_option(value=value)
+        for _ in range(10):
+            options = select.locator("option")
+            for index in range(options.count()):
+                value = (options.nth(index).get_attribute("value") or "").strip()
+                label = (options.nth(index).inner_text() or "").strip()
+                if value and "*" not in label:
+                    select.select_option(value=value)
+                    try:
+                        self.page.wait_for_timeout(300)
+                    except PlaywrightTimeoutError:
+                        pass
+                    return
+            try:
+                self.page.wait_for_timeout(500)
+            except PlaywrightTimeoutError:
                 return
 
     def _first_quantity_value(self) -> str:

@@ -10,17 +10,18 @@ from config.settings import TIMEOUT
 
 @pytest.mark.smoke
 @pytest.mark.regression
-def test_view_product_detail(page, base_url):
+def test_view_product_detail(page, base_url, test_data):
+    fallback_keywords = test_data["search"]["fallback_keywords"]
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
     detail = ProductDetailPage(page, timeout=TIMEOUT)
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        listing.open_search_listing("ao")
-    if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        listing.open_search_listing("giày")
+    for keyword in fallback_keywords:
+        if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0:
+            break
+        listing.open_search_listing(keyword)
     assert page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0, (
         "No product detail link found. Listing locator may be outdated or site has no products."
     )

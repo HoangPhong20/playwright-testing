@@ -1,8 +1,22 @@
 {
-  "search_keywords": ["ao", "giày", "phu kien"],
-  "non_existing_keyword": "khongtontaisanpham123",
-  "price_filter": {
-    "min": "100000",
-    "max": "500000"
+  "search": {
+    "primary_keyword": "ao",
+    "fallback_keywords": ["ao", "giày"],
+    "edge_cases": {
+      "unaccented": ["ao", "giay", "quan"],
+      "accented": ["áo", "giày", "quần"],
+      "with_spaces": ["  ao  ", "   giay  ", " quan  "],
+      "special_characters": ["@#$%^&*"]
+    }
+  },
+  "checkout": {
+    "valid_ward": "Phuong 1",
+    "lowercase_name": "nguyen van a",
+    "invalid_numeric_name": "123456",
+    "invalid_special_character_name": "@@@###",
+    "invalid_lowercase_phone": "abcxyz",
+    "invalid_blank_address": "     ",
+    "invalid_special_character_address": "@@@###",
+    "invalid_special_character_ward": "@@@###"
   }
 }

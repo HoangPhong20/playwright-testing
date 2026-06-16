@@ -60,17 +60,27 @@ def pytest_sessionstart(session):
     result_file = reports / "test-results.md"
     result_file.write_text(
         "# Test Run Results\n\n"
-        "| ID | Testcase | Status | Screenshot |\n"
-        "| --- | --- | --- | --- |\n",
+        "| ID | Testcase | Status | Screenshot | Failure Reason |\n"
+        "| --- | --- | --- | --- | --- |\n",
         encoding="utf-8",
     )
 
 
 def pytest_collection_modifyitems(config, items):
-    for index, item in enumerate(items, start=1):
+    missing_cases = []
+    for item in items:
         case = TEST_CASE_BY_KEY.get(_item_test_case_key(item))
-        item.test_case_id = case["id"] if case else f"TC-{index:03d}"
-        item.test_case_title = case["title"] if case else item.name
+        if not case:
+            missing_cases.append(item.nodeid)
+            continue
+        item.test_case_id = case["id"]
+        item.test_case_title = case["title"]
+    if missing_cases:
+        missing = "\n".join(f"- {nodeid}" for nodeid in missing_cases)
+        raise pytest.UsageError(
+            "Missing testcase registry entries in utils/test_case_registry.py:\n"
+            f"{missing}"
+        )
 
 
 @pytest.hookimpl(hookwrapper=True)
@@ -102,13 +112,40 @@ def _item_test_case_key(item) -> tuple:
     return test_case_key(path, function, params)
 
 
-def _append_test_result(case_id: str, title: str, status: str, screenshot: Path | None) -> None:
+def _markdown_cell(value: str) -> str:
+    return value.replace("|", "\\|").replace("\r", " ").replace("\n", "<br>")
+
+
+def _failure_reason(report) -> str:
+    if not report or report.outcome == "passed":
+        return ""
+    longrepr = getattr(report, "longreprtext", None) or str(getattr(report, "longrepr", ""))
+    return longrepr.strip().splitlines()[-1] if longrepr.strip() else report.outcome
+
+
+def _append_test_result(
+    case_id: str,
+    title: str,
+    status: str,
+    screenshot: Path | None,
+    failure_reason: str,
+) -> None:
     screenshot_link = ""
     if screenshot:
         screenshot_link = screenshot.as_posix()
-    line = f"| {case_id} | {title} | {status} | {screenshot_link} |\n"
+    line = (
+        f"| {case_id} | {_markdown_cell(title)} | {status} | "
+        f"{screenshot_link} | {_markdown_cell(failure_reason)} |\n"
+    )
     with (Path("reports") / "test-results.md").open("a", encoding="utf-8") as report:
         report.write(line)
+
+
+def _write_test_log_to_terminal(config, case_id: str, title: str, status: str) -> None:
+    terminal = config.pluginmanager.get_plugin("terminalreporter")
+    if terminal:
+        display_status = "passed" if status == "pass" else "failed"
+        terminal.write_line(f"Testcase: {case_id} - {title} | Status: {display_status}")
 
 
 def _capture_test_screenshot(page, screenshot_path: Path) -> bool:
@@ -138,6 +175,17 @@ def _capture_test_screenshot(page, screenshot_path: Path) -> bool:
     return False
 
 
+def _settle_page_before_screenshot(page) -> None:
+    try:
+        page.wait_for_load_state("domcontentloaded", timeout=5000)
+    except PlaywrightError:
+        pass
+    try:
+        page.wait_for_timeout(500)
+    except PlaywrightError:
+        pass
+
+
 @pytest.fixture(autouse=True)
 def screenshot_after_test(request, page):
     yield
@@ -147,10 +195,13 @@ def screenshot_after_test(request, page):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     safe_test_name = _safe_file_name(request.node.name)
     status = _report_status(rep_call)
+    failure_reason = _failure_reason(rep_call)
     case_id = getattr(request.node, "test_case_id", "TC-000")
     title = getattr(request.node, "test_case_title", request.node.name)
     file_name = f"{case_id}_{status}_{safe_test_name}_{ts}.png"
     screenshot_path = screenshots / file_name
+    _settle_page_before_screenshot(page)
     if not _capture_test_screenshot(page, screenshot_path):
         screenshot_path = None
-    _append_test_result(case_id, title, status, screenshot_path)
+    _append_test_result(case_id, title, status, screenshot_path, failure_reason)
+    _write_test_log_to_terminal(request.config, case_id, title, status)

@@ -42,17 +42,39 @@ def _assert_keyword_group_is_handled(page, base_url: str, keywords: list[str]) -
 
 @pytest.mark.search
 @pytest.mark.edge
-def test_search_unaccented_keywords_are_handled(page, base_url):
-    _assert_keyword_group_is_handled(page, base_url, ["ao", "giay", "quan"])
+def test_search_unaccented_keywords_are_handled(page, base_url, test_data):
+    _assert_keyword_group_is_handled(
+        page,
+        base_url,
+        test_data["search"]["edge_cases"]["unaccented"],
+    )
 
 
 @pytest.mark.search
 @pytest.mark.edge
-def test_search_accented_keywords_are_handled(page, base_url):
-    _assert_keyword_group_is_handled(page, base_url, ["áo", "giày", "quần"])
+def test_search_accented_keywords_are_handled(page, base_url, test_data):
+    _assert_keyword_group_is_handled(
+        page,
+        base_url,
+        test_data["search"]["edge_cases"]["accented"],
+    )
 
 
 @pytest.mark.search
 @pytest.mark.edge
-def test_search_keywords_with_surrounding_spaces_are_handled(page, base_url):
-    _assert_keyword_group_is_handled(page, base_url, ["  ao  ", "   giay  ", " quan  "])
+def test_search_keywords_with_surrounding_spaces_are_handled(page, base_url, test_data):
+    _assert_keyword_group_is_handled(
+        page,
+        base_url,
+        test_data["search"]["edge_cases"]["with_spaces"],
+    )
+
+
+@pytest.mark.search
+@pytest.mark.edge
+def test_search_special_character_keywords_are_handled(page, base_url, test_data):
+    _assert_keyword_group_is_handled(
+        page,
+        base_url,
+        test_data["search"]["edge_cases"]["special_characters"],
+    )

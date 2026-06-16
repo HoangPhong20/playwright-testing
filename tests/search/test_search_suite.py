@@ -10,8 +10,8 @@ from config.settings import TIMEOUT
 @pytest.mark.smoke
 @pytest.mark.search
 @pytest.mark.regression
-def test_search_product_by_keyword(page, base_url):
-    keyword = "ao"
+def test_search_product_by_keyword(page, base_url, test_data):
+    keyword = test_data["search"]["primary_keyword"]
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
@@ -33,13 +33,14 @@ def test_search_product_by_keyword(page, base_url):
 
 
 @pytest.mark.search
-def test_product_list_display(page, base_url):
+def test_product_list_display(page, base_url, test_data):
+    keyword = test_data["search"]["primary_keyword"]
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    listing.open_search_listing("ao")
+    listing.open_search_listing(keyword)
 
     cards = listing.get_product_cards()
     assert cards, "Expected listing page to display at least one product card."

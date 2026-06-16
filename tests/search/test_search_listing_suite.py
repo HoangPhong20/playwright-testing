@@ -8,13 +8,14 @@ from config.locators import ProductListLocators
 
 
 @pytest.mark.search
-def test_listing_has_clickable_product_detail_links(page, base_url):
+def test_listing_has_clickable_product_detail_links(page, base_url, test_data):
+    keyword = test_data["search"]["primary_keyword"]
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    listing.open_search_listing("ao")
+    listing.open_search_listing(keyword)
 
     links = page.locator(ProductListLocators.PRODUCT_DETAIL_LINK)
     assert links.count() > 0, "Expected search listing to contain product detail links."

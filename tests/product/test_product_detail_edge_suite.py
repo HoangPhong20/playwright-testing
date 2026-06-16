@@ -10,16 +10,16 @@ from pages.product_list_page import ProductListPage
 from utils.price_utils import parse_price_to_int
 
 
-def _open_first_product_detail(page, base_url) -> ProductDetailPage:
+def _open_first_product_detail(page, base_url, fallback_keywords: list[str]) -> ProductDetailPage:
     home = HomePage(page, timeout=TIMEOUT)
     listing = ProductListPage(page, timeout=TIMEOUT)
 
     home.open(base_url)
     home.accept_cookie_if_present()
-    if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        listing.open_search_listing("ao")
-    if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() == 0:
-        listing.open_search_listing("giày")
+    for keyword in fallback_keywords:
+        if page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0:
+            break
+        listing.open_search_listing(keyword)
 
     assert page.locator(ProductListLocators.PRODUCT_DETAIL_LINK).count() > 0, (
         "Expected at least one product detail link before opening product detail."
@@ -30,8 +30,12 @@ def _open_first_product_detail(page, base_url) -> ProductDetailPage:
 
 @pytest.mark.product
 @pytest.mark.regression
-def test_product_detail_price_is_parseable_positive_value(page, base_url):
-    detail = _open_first_product_detail(page, base_url)
+def test_product_detail_price_is_parseable_positive_value(page, base_url, test_data):
+    detail = _open_first_product_detail(
+        page,
+        base_url,
+        test_data["search"]["fallback_keywords"],
+    )
 
     price_text = detail.get_price()
     price = parse_price_to_int(price_text)
@@ -41,8 +45,12 @@ def test_product_detail_price_is_parseable_positive_value(page, base_url):
 @pytest.mark.product
 @pytest.mark.cart
 @pytest.mark.regression
-def test_product_detail_add_to_cart_control_exists(page, base_url):
-    _open_first_product_detail(page, base_url)
+def test_product_detail_add_to_cart_control_exists(page, base_url, test_data):
+    _open_first_product_detail(
+        page,
+        base_url,
+        test_data["search"]["fallback_keywords"],
+    )
 
     add_to_cart = page.locator(ProductDetailLocators.ADD_TO_CART).first
     assert add_to_cart.count() > 0, "Expected product detail page to expose add-to-cart control."
